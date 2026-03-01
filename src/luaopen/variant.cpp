@@ -26,6 +26,8 @@
 #include <godot_cpp/variant/variant.hpp>
 #include <godot_cpp/variant/utility_functions.hpp>
 
+#include "../LuaState.hpp"
+#include "../LuaSandboxConfig.hpp"
 #include "../utils/Class.hpp"
 #include "../utils/DictionaryIterator.hpp"
 #include "../utils/IndexedIterator.hpp"
@@ -173,8 +175,20 @@ sol::object variant__call(sol::this_state state, const Variant& variant, sol::va
 
 using namespace luagdextension;
 
+static void register_variant_type(sol::state_view &state, LuaSandboxConfig *config, const char *name, Variant::Type type) {
+	if (config && config->is_variant_type_blocked(name)) {
+		return;
+	}
+	state.set(name, VariantType(type));
+}
+
 extern "C" int luaopen_godot_variant(lua_State *L) {
 	sol::state_view state = L;
+
+	LuaSandboxConfig *config = nullptr;
+	if (LuaState *lua_state = LuaState::find_lua_state(state)) {
+		config = lua_state->get_sandbox_config().ptr();
+	}
 
 	state.new_usertype<Variant>(
 		"Variant",
@@ -241,44 +255,43 @@ extern "C" int luaopen_godot_variant(lua_State *L) {
 	state.do_string("if string then setmetatable(string, { __index = String }) end");
 
 	// math types
-	state.set("Vector2", VariantType(Variant::VECTOR2));
-	state.set("Vector2i", VariantType(Variant::VECTOR2I));
-	state.set("Rect2", VariantType(Variant::RECT2));
-	state.set("Rect2i", VariantType(Variant::RECT2I));
-	state.set("Vector3", VariantType(Variant::VECTOR3));
-	state.set("Vector3i", VariantType(Variant::VECTOR3I));
-	state.set("Transform2D", VariantType(Variant::TRANSFORM2D));
-	state.set("Vector4", VariantType(Variant::VECTOR4));
-	state.set("Vector4i", VariantType(Variant::VECTOR4I));
-	state.set("Plane", VariantType(Variant::PLANE));
-	state.set("Quaternion", VariantType(Variant::QUATERNION));
-	state.set("AABB", VariantType(Variant::AABB));
-	state.set("Basis", VariantType(Variant::BASIS));
-	state.set("Transform3D", VariantType(Variant::TRANSFORM3D));
-	state.set("Projection", VariantType(Variant::PROJECTION));
+	register_variant_type(state, config, "Vector2", Variant::VECTOR2);
+	register_variant_type(state, config, "Vector2i", Variant::VECTOR2I);
+	register_variant_type(state, config, "Rect2", Variant::RECT2);
+	register_variant_type(state, config, "Rect2i", Variant::RECT2I);
+	register_variant_type(state, config, "Vector3", Variant::VECTOR3);
+	register_variant_type(state, config, "Vector3i", Variant::VECTOR3I);
+	register_variant_type(state, config, "Transform2D", Variant::TRANSFORM2D);
+	register_variant_type(state, config, "Vector4", Variant::VECTOR4);
+	register_variant_type(state, config, "Vector4i", Variant::VECTOR4I);
+	register_variant_type(state, config, "Plane", Variant::PLANE);
+	register_variant_type(state, config, "Quaternion", Variant::QUATERNION);
+	register_variant_type(state, config, "AABB", Variant::AABB);
+	register_variant_type(state, config, "Basis", Variant::BASIS);
+	register_variant_type(state, config, "Transform3D", Variant::TRANSFORM3D);
+	register_variant_type(state, config, "Projection", Variant::PROJECTION);
 
 	// misc types
-	state.set("Color", VariantType(Variant::COLOR));
-	state.set("StringName", VariantType(Variant::STRING_NAME));
-	state.set("NodePath", VariantType(Variant::NODE_PATH));
-	state.set("RID", VariantType(Variant::RID));
-	state.set("Callable", VariantType(Variant::CALLABLE));
-	state.set("Signal", VariantType(Variant::SIGNAL));
-	state.set("Dictionary", VariantType(Variant::DICTIONARY));
-	state.set("Array", VariantType(Variant::ARRAY));
+	register_variant_type(state, config, "Color", Variant::COLOR);
+	register_variant_type(state, config, "StringName", Variant::STRING_NAME);
+	register_variant_type(state, config, "NodePath", Variant::NODE_PATH);
+	register_variant_type(state, config, "RID", Variant::RID);
+	register_variant_type(state, config, "Callable", Variant::CALLABLE);
+	register_variant_type(state, config, "Signal", Variant::SIGNAL);
+	register_variant_type(state, config, "Dictionary", Variant::DICTIONARY);
+	register_variant_type(state, config, "Array", Variant::ARRAY);
 
 	// typed arrays
-	state.set("PackedByteArray", VariantType(Variant::PACKED_BYTE_ARRAY));
-	state.set("PackedInt32Array", VariantType(Variant::PACKED_INT32_ARRAY));
-	state.set("PackedInt64Array", VariantType(Variant::PACKED_INT64_ARRAY));
-	state.set("PackedFloat32Array", VariantType(Variant::PACKED_FLOAT32_ARRAY));
-	state.set("PackedFloat64Array", VariantType(Variant::PACKED_FLOAT64_ARRAY));
-	state.set("PackedStringArray", VariantType(Variant::PACKED_STRING_ARRAY));
-	state.set("PackedVector2Array", VariantType(Variant::PACKED_VECTOR2_ARRAY));
-	state.set("PackedVector3Array", VariantType(Variant::PACKED_VECTOR3_ARRAY));
-	state.set("PackedColorArray", VariantType(Variant::PACKED_COLOR_ARRAY));
-	state.set("PackedVector4Array", VariantType(Variant::PACKED_VECTOR4_ARRAY));
+	register_variant_type(state, config, "PackedByteArray", Variant::PACKED_BYTE_ARRAY);
+	register_variant_type(state, config, "PackedInt32Array", Variant::PACKED_INT32_ARRAY);
+	register_variant_type(state, config, "PackedInt64Array", Variant::PACKED_INT64_ARRAY);
+	register_variant_type(state, config, "PackedFloat32Array", Variant::PACKED_FLOAT32_ARRAY);
+	register_variant_type(state, config, "PackedFloat64Array", Variant::PACKED_FLOAT64_ARRAY);
+	register_variant_type(state, config, "PackedStringArray", Variant::PACKED_STRING_ARRAY);
+	register_variant_type(state, config, "PackedVector2Array", Variant::PACKED_VECTOR2_ARRAY);
+	register_variant_type(state, config, "PackedVector3Array", Variant::PACKED_VECTOR3_ARRAY);
+	register_variant_type(state, config, "PackedColorArray", Variant::PACKED_COLOR_ARRAY);
+	register_variant_type(state, config, "PackedVector4Array", Variant::PACKED_VECTOR4_ARRAY);
 
 	return 0;
 }
-

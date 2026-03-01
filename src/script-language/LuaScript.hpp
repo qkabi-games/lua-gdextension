@@ -23,6 +23,7 @@
 #define __LUA_SCRIPT_EXTENSION_HPP__
 
 #include <godot_cpp/classes/script_extension.hpp>
+#include <godot_cpp/classes/script_language.hpp>
 #include <godot_cpp/templates/hash_map.hpp>
 #include <godot_cpp/templates/hash_set.hpp>
 

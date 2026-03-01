@@ -32,6 +32,7 @@ using namespace godot;
 namespace luagdextension {
 
 class LuaFunction;
+class LuaSandboxConfig;
 class LuaTable;
 class LuaThread;
 
@@ -123,6 +124,9 @@ public:
 	void set_package_path(const String& path);
 	void set_package_cpath(const String& cpath);
 
+	void set_sandbox_config(const Ref<LuaSandboxConfig> &config);
+	Ref<LuaSandboxConfig> get_sandbox_config() const;
+
 #ifdef HAVE_LUA_WARN
 	void warn(const char *msg, int tocont);
 #endif
@@ -142,6 +146,7 @@ protected:
 	String _to_string() const;
 
 	sol::state lua_state;
+	Ref<LuaSandboxConfig> sandbox_config;
 #ifdef HAVE_LUA_WARN
 	bool warning_on = true;
 	String warn_message;
@@ -149,6 +154,8 @@ protected:
 
 private:
 	static HashMap<lua_State *, LuaState *> valid_states;
+
+	void apply_sandbox_config();
 };
 
 }

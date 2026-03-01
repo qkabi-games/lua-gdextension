@@ -27,6 +27,8 @@
 #include "../utils/string_names.hpp"
 #include "../LuaCoroutine.hpp"
 #include "../LuaObject.hpp"
+#include "../LuaSandboxConfig.hpp"
+#include "../LuaState.hpp"
 
 #include <godot_cpp/core/error_macros.hpp>
 #include <godot_cpp/classes/object.hpp>
@@ -116,18 +118,33 @@ static int lua_await(lua_State *L) {
 	return lua_yield(L, 0);
 }
 
+static void register_utility_function(sol::state_view &state, LuaSandboxConfig *config, const char *name, auto fn) {
+	if (config && config->is_utility_function_blocked(name)) {
+		return;
+	}
+	state.set(name, fn);
+}
+
 extern "C" int luaopen_godot_utility_functions(lua_State *L) {
 	sol::state_view state = L;
 
-	register_utility_functions(state);
-	state.set("is_instance_valid", wrap_function(L, &is_instance_valid));
+	LuaSandboxConfig *config = nullptr;
+	if (LuaState *lua_state = LuaState::find_lua_state(state)) {
+		config = lua_state->get_sandbox_config().ptr();
+	}
 
-	// In Lua, `print` separates passed values with "\t", so we bind it to Godot's `printt`
-	state.do_string("print = printt");
+	register_utility_functions(state);
+	register_utility_function(state, config, "is_instance_valid", wrap_function(L, &is_instance_valid));
+
+	if (config && config->is_utility_function_blocked("print")) {
+		// In Lua, `print` separates passed values with "\t", so we bind it to Godot's `printt`
+		state.set("print", sol::nil);
+	} else {
+		state.do_string("print = printt");
+	}
 
 	// Use `await` to await for signals.
 	state.set("await", lua_await);
 
 	return 0;
 }
-

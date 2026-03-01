@@ -50,6 +50,7 @@ ClassMethodBind::ClassMethodBind(const Class& cls, const StringName& method_name
 
 sol::object ClassMethodBind::call(sol::this_state state, const sol::stack_object& self, const sol::variadic_args& args) const {
 	ERR_FAIL_COND_V_MSG(!self.is<Class>() || self.as<Class&>() != cls, sol::nil, String("To call methods in Lua, use ':' instead of '.': `Class:%s(...)`") % method_name);
+
 	Array var_args = VariantArguments(args).get_array();
 	var_args.push_front(get_method_name());
 	var_args.push_front(cls.get_name());

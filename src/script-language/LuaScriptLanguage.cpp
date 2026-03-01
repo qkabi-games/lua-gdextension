@@ -28,6 +28,7 @@
 #include "LuaScriptSignal.hpp"
 #include "../LuaError.hpp"
 #include "../LuaTable.hpp"
+#include "../LuaSandboxConfig.hpp"
 #include "../LuaState.hpp"
 #include "../generated/lua_script_globals.h"
 #include "../utils/project_settings.hpp"
@@ -48,6 +49,7 @@ String LuaScriptLanguage::_get_name() const {
 
 void LuaScriptLanguage::_init() {
 	lua_state.instantiate();
+	lua_state->set_sandbox_config(LuaSandboxConfig::with_defaults());
 	lua_state->open_libraries();
 
 	lua_parser.instantiate();
