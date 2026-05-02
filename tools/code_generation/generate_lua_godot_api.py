@@ -250,7 +250,11 @@ def generate_builtin_classes(
                     if is_string:
                         lines.append(f"--- @param self string")
                     for arg in method.get('arguments', []):
-                        lines.append(f"--- @param {_arg_name(arg['name'])} {_arg_type(arg['type'], arg.get('default_value'))}{' Default: ' + arg.get('default_value', '') if arg.get('default_value') else ''}")
+                        # Special handling: accept both Callable and Lua functions
+                        if arg["type"] == "Callable":
+                            lines.append(f"--- @param {arg['name']} Callable | fun(...: any)")
+                        else:
+                            lines.append(f"--- @param {_arg_name(arg['name'])} {_arg_type(arg['type'], arg.get('default_value'))}{' Default: ' + arg.get('default_value', '') if arg.get('default_value') else ''}")
                     if return_type := method.get("return_type"):
                         lines.append(f"--- @return {_arg_type(return_type)}")
                     args = [_arg_name(arg["name"]) for arg in method.get("arguments", [])]
@@ -327,7 +331,11 @@ def generate_classes(
             if method["is_static"]:
                 lines.append("--- static")
             for arg in method.get('arguments', []):
-                lines.append(f"--- @param {_arg_name(arg['name'])} {_arg_type(arg['type'], arg.get('default_value'))}{' Default: ' + arg.get('default_value', '') if arg.get('default_value') else ''}")
+                # Special handling: accept both Callable and Lua functions
+                if arg["type"] == "Callable":
+                    lines.append(f"--- @param {arg['name']} Callable | fun(...: any)")
+                else:
+                    lines.append(f"--- @param {_arg_name(arg['name'])} {_arg_type(arg['type'], arg.get('default_value'))}{' Default: ' + arg.get('default_value', '') if arg.get('default_value') else ''}")
             if return_value := method.get("return_value"):
                 lines.append(f"--- @return {_arg_type(return_value['type'])}")
             args = [_arg_name(arg["name"]) for arg in method.get("arguments", [])]
@@ -357,7 +365,11 @@ def generate_utility_functions(
 
         lines.append("")
         for arg in f.get('arguments', []):
-            lines.append(f"--- @param {_arg_name(arg['name'])} {_arg_type(arg['type'])}")
+            # Special handling: accept both Callable and Lua functions
+            if arg["type"] == "Callable":
+                lines.append(f"--- @param {arg['name']} Callable | fun(...: any)")
+            else:
+                lines.append(f"--- @param {_arg_name(arg['name'])} {_arg_type(arg['type'])}")
         if return_type := f.get("return_type"):
             lines.append(f"--- @return {_arg_type(return_type)}")
         args = [_arg_name(arg["name"]) for arg in f.get("arguments", [])]

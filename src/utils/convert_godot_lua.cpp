@@ -356,7 +356,11 @@ Variant do_file(sol::state_view& lua_state, const String& filename, sol::load_mo
 }
 
 Variant load_buffer(sol::state_view& lua_state, const PackedByteArray& chunk, const String& chunkname, sol::load_mode mode, LuaTable *env) {
-	sol::load_result result = lua_state.load(to_string_view(chunk), to_std_string(chunkname), mode);
+	String final_chunkname = chunkname;
+	if (!final_chunkname.is_empty() && final_chunkname[0] != '@') {
+		final_chunkname = "@" + final_chunkname;
+	}
+	sol::load_result result = lua_state.load(to_string_view(chunk), to_std_string(final_chunkname), mode);
 	if (result.valid() && env) {
 		lua_push(lua_state, (const Object *) env);
 #if LUA_VERSION_NUM >= 502

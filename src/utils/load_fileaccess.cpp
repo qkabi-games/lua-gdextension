@@ -69,7 +69,11 @@ sol::load_result load_fileaccess(sol::state_view& lua_state, const String& filen
 	FileReaderData reader_data;
 	reader_data.file = file.ptr();
 	reader_data.buffer_size = 1024;
-	sol::load_result result = lua_state.load((lua_Reader) file_reader, (void *) &reader_data, to_std_string(normalized_filename), mode);
+	String chunkname = normalized_filename;
+	if (!chunkname.is_empty() && chunkname[0] != '@') {
+		chunkname = "@" + chunkname;
+	}
+	sol::load_result result = lua_state.load((lua_Reader) file_reader, (void *) &reader_data, to_std_string(chunkname), mode);
 	if (result.valid() && env) {
 		lua_push(lua_state, (const Object *) env);
 #if LUA_VERSION_NUM >= 502

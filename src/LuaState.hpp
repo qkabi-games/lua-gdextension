@@ -1,16 +1,16 @@
 /**
  * Copyright (C) 2026 Gil Barbosa Reis.
- * 
+ *
  * Permission is hereby granted, free of charge, to any person obtaining a copy of
  * this software and associated documentation files (the “Software”), to deal in
  * the Software without restriction, including without limitation the rights to
  * use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies
  * of the Software, and to permit persons to whom the Software is furnished to do
  * so, subject to the following conditions:
- * 
+ *
  * The above copyright notice and this permission notice shall be included in all
  * copies or substantial portions of the Software.
- * 
+ *
  * THE SOFTWARE IS PROVIDED “AS IS”, WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
  * IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
  * FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
@@ -32,6 +32,7 @@ using namespace godot;
 namespace luagdextension {
 
 class LuaFunction;
+class LuaSandboxConfig;
 class LuaTable;
 class LuaThread;
 
@@ -92,14 +93,14 @@ public:
 	};
 
 	enum LoadMode {
-		LOAD_MODE_ANY = (int) sol::load_mode::any,
-		LOAD_MODE_TEXT = (int) sol::load_mode::text,
-		LOAD_MODE_BINARY = (int) sol::load_mode::binary,
+		LOAD_MODE_ANY = (int)sol::load_mode::any,
+		LOAD_MODE_TEXT = (int)sol::load_mode::text,
+		LOAD_MODE_BINARY = (int)sol::load_mode::binary,
 	};
 
 	enum GcMode {
-		GC_MODE_INCREMENTAL = (int) sol::gc_mode::incremental,
-		GC_MODE_GENERATIONAL = (int) sol::gc_mode::generational,
+		GC_MODE_INCREMENTAL = (int)sol::gc_mode::incremental,
+		GC_MODE_GENERATIONAL = (int)sol::gc_mode::generational,
 	};
 
 	LuaState();
@@ -110,14 +111,14 @@ public:
 	void open_libraries(BitField<Library> libraries = ALL_LIBS);
 	bool are_libraries_opened(BitField<Library> libraries) const;
 
-	Ref<LuaTable> create_table(const Dictionary& initial_values = {});
-	Ref<LuaFunction> create_function(const Callable& callable);
-	Variant load_buffer(const PackedByteArray& chunk, const String& chunkname = "", LoadMode mode = LOAD_MODE_ANY, LuaTable *env = nullptr);
-	Variant load_string(const String& chunk, const String& chunkname = "", LuaTable *env = nullptr);
-	Variant load_file(const String& filename, LoadMode mode = LOAD_MODE_ANY, LuaTable *env = nullptr);
-	Variant do_buffer(const PackedByteArray& chunk, const String& chunkname = "", LoadMode mode = LOAD_MODE_ANY, LuaTable *env = nullptr);
-	Variant do_string(const String& chunk, const String& chunkname = "", LuaTable *env = nullptr);
-	Variant do_file(const String& filename, LoadMode mode = LOAD_MODE_ANY, LuaTable *env = nullptr);
+	Ref<LuaTable> create_table(const Dictionary &initial_values = {});
+	Ref<LuaFunction> create_function(const Callable &callable);
+	Variant load_buffer(const PackedByteArray &chunk, const String &chunkname = "", LoadMode mode = LOAD_MODE_ANY, LuaTable *env = nullptr);
+	Variant load_string(const String &chunk, const String &chunkname = "", LuaTable *env = nullptr);
+	Variant load_file(const String &filename, LoadMode mode = LOAD_MODE_ANY, LuaTable *env = nullptr);
+	Variant do_buffer(const PackedByteArray &chunk, const String &chunkname = "", LoadMode mode = LOAD_MODE_ANY, LuaTable *env = nullptr);
+	Variant do_string(const String &chunk, const String &chunkname = "", LuaTable *env = nullptr);
+	Variant do_file(const String &filename, LoadMode mode = LOAD_MODE_ANY, LuaTable *env = nullptr);
 
 	Ref<LuaTable> get_globals() const;
 	Ref<LuaTable> get_registry() const;
@@ -125,8 +126,8 @@ public:
 
 	String get_package_path() const;
 	String get_package_cpath() const;
-	void set_package_path(const String& path);
-	void set_package_cpath(const String& cpath);
+	void set_package_path(const String &path);
+	void set_package_cpath(const String &cpath);
 
 	void collect_garbage();
 	void step_gc(int step_size_kilobytes = 0);
@@ -137,6 +138,9 @@ public:
 	GcMode change_gc_mode_incremental(int pause, int step_multiplier, int step_byte_size);
 	GcMode change_gc_mode_generational(int minor_multiplier, int major_multiplier);
 	bool supports_gc_mode(GcMode mode) const;
+
+	void set_sandbox_config(const Ref<LuaSandboxConfig> &config);
+	Ref<LuaSandboxConfig> get_sandbox_config() const;
 
 #ifdef HAVE_LUA_WARN
 	void warn(const char *msg, int tocont);
@@ -157,6 +161,7 @@ protected:
 	String _to_string() const;
 
 	sol::state lua_state;
+	Ref<LuaSandboxConfig> sandbox_config;
 #ifdef HAVE_LUA_WARN
 	bool warning_on = true;
 	String warn_message;
@@ -164,9 +169,11 @@ protected:
 
 private:
 	static HashMap<lua_State *, LuaState *> valid_states;
+
+	void apply_sandbox_config();
 };
 
-}
+} //namespace luagdextension
 VARIANT_BITFIELD_CAST(luagdextension::LuaState::Library);
 VARIANT_ENUM_CAST(luagdextension::LuaState::LoadMode);
 VARIANT_ENUM_CAST(luagdextension::LuaState::GcMode);

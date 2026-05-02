@@ -5,7 +5,7 @@
 --- This function should only be called inside a coroutine.
 --- 
 --- Note: only available if `GODOT_UTILITY_FUNCTIONS` library is open in the LuaState.
---- @param awaitable Object | Signal
+--- @param awaitable Object | Signal | nil
 --- @return any
 function await(awaitable) end
 

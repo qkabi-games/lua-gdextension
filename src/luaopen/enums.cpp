@@ -19,15 +19,20 @@
  * OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
  * SOFTWARE.
  */
+#include "../LuaSandboxConfig.hpp"
+#include "../LuaState.hpp"
 #include "../generated/global_enums.hpp"
-
 #include <sol/sol.hpp>
 
 extern "C" int luaopen_godot_enums(lua_State *L) {
 	sol::state_view state = L;
 
-	register_global_enums(state);
+	luagdextension::LuaSandboxConfig *config = nullptr;
+	if (luagdextension::LuaState *lua_state = luagdextension::LuaState::find_lua_state(state)) {
+		config = lua_state->get_sandbox_config().ptr();
+	}
+
+	register_global_enums(state, config);
 
 	return 0;
 }
-

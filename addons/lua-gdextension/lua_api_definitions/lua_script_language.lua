@@ -222,6 +222,10 @@ function export_tool_button(...) end
 --- Signal definition for Lua scripts.
 LuaScriptSignal = {}
 
+--- Emits the signal with the given arguments.
+--- @param ... any
+function LuaScriptSignal:emit(...) end
+
 --- Used to define custom signals in Lua scripts.
 --- For now there is no way to pass type information for arguments, only their names.
 --- ```

@@ -29,6 +29,7 @@
 #include "LuaASTNode.hpp"
 #include "LuaASTQuery.hpp"
 #include "LuaObject.hpp"
+#include "LuaSandboxConfig.hpp"
 #include "LuaState.hpp"
 #include "LuaTable.hpp"
 #include "LuaThread.hpp"
@@ -71,6 +72,7 @@ static void initialize(ModuleInitializationLevel level) {
 	ClassDB::register_abstract_class<LuaDebug>();
 	ClassDB::register_class<LuaError>();
 	ClassDB::register_class<LuaState>();
+	ClassDB::register_class<LuaSandboxConfig>();
 
 	// Parser stuff
 	ClassDB::register_abstract_class<LuaASTNode>();

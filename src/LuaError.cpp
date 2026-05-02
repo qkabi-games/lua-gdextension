@@ -71,11 +71,86 @@ void LuaError::set_status(Status status) {
 }
 
 String LuaError::extract_message(const sol::load_result& load_result) {
-	return luaL_tolstring(load_result.lua_state(), load_result.stack_index(), NULL);
+	lua_State *L = load_result.lua_state();
+	int stack_index = load_result.stack_index();
+
+	const char *raw = luaL_tolstring(L, stack_index, NULL);
+	if (!raw) {
+		return String();
+	}
+	String msg = raw;
+	lua_pop(L, 1);
+
+	if (msg.begins_with("[string \"")) {
+		int closing_bracket = msg.find("\"]");
+		if (closing_bracket > 0) {
+			String location = msg.substr(9, closing_bracket - 9);
+			String remaining = msg.substr(closing_bracket + 2);
+			return String("[%s]%s") % Array::make(location, remaining);
+		}
+	}
+
+	return msg;
 }
 
 String LuaError::extract_message(const sol::protected_function_result& function_result) {
-	return luaL_tolstring(function_result.lua_state(), function_result.stack_index() + function_result.return_count() - 1, NULL);
+	lua_State *L = function_result.lua_state();
+
+	const char *raw = luaL_tolstring(L, -1, NULL);
+	if (!raw) {
+		return String();
+	}
+	String msg = raw;
+	lua_pop(L, 1);
+
+	lua_Debug ar;
+	String full_source;
+	int line = -1;
+
+	for (int level = 0; lua_getstack(L, level, &ar) != 0; level++) {
+		if (lua_getinfo(L, "Sl", &ar) && ar.source) {
+			if (ar.source[0] == '@') {
+				full_source = ar.source + 1;
+				line = ar.currentline > 0 ? ar.currentline : ar.linedefined;
+				break;
+			}
+		}
+	}
+
+	if (full_source.is_empty()) {
+		return msg;
+	}
+
+	// Lua truncates long chunknames with "..." in raw errors.
+	// Since we already format [full_source:line] from lua_getinfo,
+	// strip the "source:line: " prefix from the raw message.
+	String error_text;
+	if (line > 0) {
+		String marker = String(":%d: ") % (int64_t)line;
+		int pos = msg.rfind(marker);
+		if (pos >= 0) {
+			error_text = msg.substr(pos + marker.length());
+		}
+	}
+
+	if (error_text.is_empty()) {
+		int colon_space = msg.find(": ");
+		if (colon_space >= 0) {
+			int second = msg.find(": ", colon_space + 2);
+			if (second >= 0) {
+				error_text = msg.substr(second + 2);
+			} else {
+				error_text = msg.substr(colon_space + 2);
+			}
+		}
+	}
+
+	if (error_text.is_empty()) {
+		error_text = msg;
+	}
+
+	String result = String("[%s:%d] %s") % Array::make(full_source, line, error_text);
+	return result;
 }
 
 }

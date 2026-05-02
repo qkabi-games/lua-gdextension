@@ -22,6 +22,7 @@
 #include "LuaState.hpp"
 
 #include "LuaFunction.hpp"
+#include "LuaSandboxConfig.hpp"
 #include "LuaTable.hpp"
 #include "LuaThread.hpp"
 #include "luaopen/godot.hpp"
@@ -168,6 +169,16 @@ void LuaState::open_libraries(BitField<Library> libraries) {
 	}
 
 	lua_state.registry().set("_GDEXTENSION_OPEN_LIBS", lua_state.registry().get_or("_GDEXTENSION_OPEN_LIBS", 0) | libraries);
+
+	apply_sandbox_config();
+}
+
+void LuaState::set_sandbox_config(const Ref<LuaSandboxConfig> &config) {
+	sandbox_config = config;
+}
+
+Ref<LuaSandboxConfig> LuaState::get_sandbox_config() const {
+	return sandbox_config;
 }
 
 bool LuaState::are_libraries_opened(BitField<Library> libraries) const {
@@ -380,6 +391,32 @@ LuaState *LuaState::find_lua_state(lua_State *L) {
 	}
 }
 
+void LuaState::apply_sandbox_config() {
+	if (sandbox_config.is_null()) {
+		return;
+	}
+
+	auto globals = lua_state.globals();
+
+	for (const StringName &lib : sandbox_config->get_blocked_libraries()) {
+		String lib_str = lib;
+		globals[lib_str] = sol::nil;
+	}
+
+	for (const StringName &func : sandbox_config->get_blocked_library_functions()) {
+		String func_str = func;
+		if (func_str.contains(String("."))) {
+			PackedStringArray parts = func_str.split(".");
+			if (parts.size() == 2) {
+				auto lib_table = globals.get<sol::table>(parts[0]);
+				if (lib_table) {
+					lib_table[parts[1]] = sol::nil;
+				}
+			}
+		}
+	}
+}
+
 void LuaState::_bind_methods() {
 	// Library enum
 	BIND_BITFIELD_FLAG(LUA_BASE);
@@ -445,6 +482,9 @@ void LuaState::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("change_gc_mode_incremental", "pause", "step_multiplier", "step_byte_size"), &LuaState::change_gc_mode_incremental);
 	ClassDB::bind_method(D_METHOD("change_gc_mode_generational", "minor_multiplier", "major_multiplier"), &LuaState::change_gc_mode_generational);
 	ClassDB::bind_method(D_METHOD("supports_gc_mode", "gc_mode"), &LuaState::supports_gc_mode);
+
+	ClassDB::bind_method(D_METHOD("set_sandbox_config", "config"), &LuaState::set_sandbox_config);
+	ClassDB::bind_method(D_METHOD("get_sandbox_config"), &LuaState::get_sandbox_config);
 
 	ClassDB::bind_static_method(LuaState::get_class_static(), D_METHOD("get_lua_runtime"), &LuaState::get_lua_runtime);
 	ClassDB::bind_static_method(LuaState::get_class_static(), D_METHOD("get_lua_version_num"), &LuaState::get_lua_version_num);
